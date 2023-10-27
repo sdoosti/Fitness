@@ -3,13 +3,21 @@
 Created on Monday 7/31/23
 
 @author: Shahryar Doosti
+
+Locate the API Key file in the parent folder named "api.key"
 """
 
 import requests
 import json
 import os
+from pathlib import Path
 
-API_KEY = "58107-3eb77411277d73418bd05999791f1930"
+PATH = os.path.abspath(os.getcwd())
+parent_path = Path(PATH).parents[0]
+api_path = os.path.join(parent_path, "api.key")
+
+with open(api_path,"r") as f:
+    API_KEY = f.readline().rstrip()
 
 headers = {'Content-Type': 'application/json',
           'Api-Key': API_KEY}
