@@ -16,7 +16,7 @@ import re
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 
 processed_path = "processed_comments_102423.txt"
 comments_path = "merged_comments.csv"

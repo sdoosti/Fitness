@@ -16,7 +16,7 @@ from datetime import date
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 FILE = "merged_comments.csv"
 
 def data_file_path(file_path):
