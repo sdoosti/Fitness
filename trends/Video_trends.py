@@ -10,10 +10,12 @@ Updated to get data for general list of creators (json file)
 version 2: creates a batch of 200 videos
 """
 
+import os, sys
+sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import tubular_api2 as api
+from API.tubular_api import api
 import pandas as pd
-import os
 from time import sleep
 import json
 from datetime import date
@@ -21,7 +23,7 @@ from datetime import date
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 YOGA_FILE = "final_yoga_videos_091523.json"
 
 def data_file_path(file_path):
@@ -90,7 +92,7 @@ def query(path):
         query_counter += 1
         videos = video_list[i:i+batch_size]
         query_post_data = post_data(videos,convert_to_youtube_id=True,date_range={'min':"earliest"})
-        response = api.tubular_api('/v3.1/video.trends',query_post_data)
+        response = api('/v3.1/video.trends',query_post_data)
         results.extend(response.get('trends'))
         _vids = [x['id'] for x in response.get('trends')]
         vids.append(_vids)

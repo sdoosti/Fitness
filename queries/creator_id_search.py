@@ -5,16 +5,22 @@ Created on 9/14/23
 @author: Shahryar Doosti
 
 It checks the list of YouTube Channels and search for Tubular ids
+
+chnages:
+- format of os current file directory
+- relation to other python files
 """
 
+import os, sys
+sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import tubular_api2 as api
+from API.tubular_api import api
 import pandas as pd
-import os
 from time import sleep
 import json
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 channels_file = "final_channel_list.csv"
 
 def data_file(file_path):
@@ -52,7 +58,7 @@ def sanity_check_creator_id(channel_files):
     creator_df = data_file(channels_file)
     creator_list = creator_df.iloc[:,1].to_list()
     query_post_data = make_post_data(creator_list)
-    response = api.tubular_api('/v3.1/creator.search',query_post_data)
+    response = api('/v3.1/creator.search',query_post_data)
     for k, row in creator_df.iterrows():
         print('-'*30)
         print(k)

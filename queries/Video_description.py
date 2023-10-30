@@ -17,7 +17,7 @@ import re
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 YOGA_FILE = "final_yoga_videos_091523.json"
 
 def video_file(file_path):

@@ -7,14 +7,16 @@ Created on Monday 7/31/23
 Finding relevant creators in Fitness category
 """
 
+import os, sys
+sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import tubular_api2 as api
+from API.tubular_api import api
 import pandas as pd
-import os
 from time import sleep
 import json
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 # FILE_NAME = 
 # DATA_PATH = os.path.join(PATH.replace("API","Data"),FILE_NAME)
 
@@ -85,7 +87,7 @@ def save_data(response,terms):
 
 def get_creators_by_term(theme):
     post_data = make_post_data(theme)
-    creator_response = api.tubular_api('/v3/creator.search', post_data)
+    creator_response = api('/v3/creator.search', post_data)
     save_data(creator_response, theme)
 
 Terms_yoga = [

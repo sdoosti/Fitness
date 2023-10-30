@@ -5,15 +5,20 @@ Created on Monday 7/31/23
 @author: Shahryar Doosti
 
 Locate the API Key file in the parent folder named "api.key"
+
+changes:
+- format of current file directory
 """
 
 import requests
 import json
-import os
+import os, sys
 from pathlib import Path
 
-PATH = os.path.abspath(os.getcwd())
-parent_path = Path(PATH).parents[0]
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+PATH = os.path.abspath(__file__)
+parent_path = os.path.dirname(os.path.dirname(os.path.dirname((PATH))))
 api_path = os.path.join(parent_path, "api.key")
 
 with open(api_path,"r") as f:
@@ -39,7 +44,7 @@ def handle_error(response):
         error = f'API call failed with code {response.status_code}: {response.text}'
     raise Exception(error)
 
-def tubular_api(endpoint, data):    
+def api(endpoint, data):    
     """General function to call Tubular API
     Args:        
         endpoint: Endpoint name including version

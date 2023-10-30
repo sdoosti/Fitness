@@ -9,10 +9,12 @@ It collects daily views and followers for a given list of channels
 Updated to get data for general list of creators (json file)
 """
 
+import os, sys
+sys.path.append("..")
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import tubular_api2 as api
+from API.tubular_api import api
 import pandas as pd
-import os
 from time import sleep
 import json
 from datetime import date
@@ -20,7 +22,7 @@ from datetime import date
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.abspath(__file__)
 YOGA_FILE = "final_channel_list.csv"
 
 def data_file(file_path):
@@ -47,7 +49,7 @@ def save_data(response, path):
 def query(path):
     creator_list = data_file(path)
     query_post_data = post_data(creator_list)
-    response = api.tubular_api('/v3.1/creator.trends',query_post_data)
+    response = api('/v3.1/creator.trends',query_post_data)
     save_data(response, f"final_yoga_channels_tends_{today_str}.json")
     return response
 
