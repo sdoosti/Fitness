@@ -12,6 +12,8 @@ import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from datetime import date
 import re
+from transformers import AutoModelForSequenceClassification
+
 
 today = date.today()
 today_str = today.strftime("%m%d%y")
@@ -20,8 +22,6 @@ PATH = os.path.abspath(os.getcwd())
 
 processed_path = "processed_comments_102423.txt"
 comments_path = "merged_comments.csv"
-
-threshold = 10 # minimum number of terms for each comments (after preprocessing)
 
 def data_file_path(file_path):
     return os.path.join(PATH.replace("API","Data"),file_path)
@@ -32,7 +32,27 @@ comments = pd.read_csv(data_file_path(comments_path))
 comments = comments[comments.comment_text.notnull()].copy()
 comments['processed_text'] = [re.sub("\d+", "", x.strip())for x in processed_docs]
 comments['length'] = comments.processed_text.apply(lambda x: len(x.split(',')))
-comments['include'] = comments.length > threshold
+#comments['include'] = comments.length > threshold
+
+# BERT
+docs = comments[comments.include].processed_text.to_list()
+
+bert_model = .from_pretrained('bert-base-uncased')
+
+# Convert the text to BERT embeddings
+def get_bert_embeddings(text):
+    encoded_inputs = bert_model.encode(text, return_tensors='pt')
+    hidden_states = encoded_inputs.last_hidden_state
+    embeddings = hidden_states.view(-1, hidden_states.shape[-1])
+    return embeddings.detach().numpy()
+
+
+
+
+
+
+
+
 
 # TF-IDF
 docs = comments[comments.include].processed_text.to_list()
