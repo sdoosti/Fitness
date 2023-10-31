@@ -23,11 +23,11 @@ from datetime import date
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(__file__)
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 YOGA_FILE = "final_yoga_videos_091523.json"
 
 def data_file_path(file_path):
-    return os.path.join(PATH.replace("API","Data"),file_path)
+    return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
 def video_ids(path):
     with open(path, "r") as f:
@@ -66,7 +66,7 @@ def post_data(videos, convert_to_youtube_id=False,
 
     
 def save_data(response, path):
-    trend_path = os.path.join(PATH.replace("API","Data"),path)
+    trend_path = os.path.join(os.path.dirname(PATH),"Data",path)
     with open(trend_path, 'w') as f:
         json.dump(response, f)
 

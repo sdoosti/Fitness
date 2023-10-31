@@ -20,11 +20,11 @@ import pandas as pd
 from time import sleep
 import json
 
-PATH = os.path.abspath(__file__)
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 channels_file = "final_channel_list.csv"
 
 def data_file(file_path):
-    full_path = os.path.join(PATH.replace("API","Data"),file_path)
+    full_path = os.path.join(os.path.dirname(PATH),"Data",file_path)
     return pd.read_csv(full_path)
 
 def make_post_data(creators):

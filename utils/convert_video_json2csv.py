@@ -17,11 +17,11 @@ import re
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 YOGA_FILE = "final_yoga_videos_101223.json"
 
 def video_file(file_path):
-    video_path = os.path.join(PATH.replace("API","Data"),file_path)
+    video_path = os.path.join(os.path.dirname(PATH),"Data",file_path)
     with open(video_path, "r") as f:
         videos_json = json.load(f)
     return videos_json
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     creators = video_df.groupby(['creator','creator_id'])['video_id'].count().reset_index()
 
     # save to csv file
-    videos_path = os.path.join(PATH.replace("API","Data"),f"videos_{today_str}.csv")
+    videos_path = os.path.join(os.path.dirname(PATH),"Data",f"videos_{today_str}.csv")
     video_df.to_csv(videos_path, index=False)
 
     """ 

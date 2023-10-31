@@ -22,10 +22,10 @@ from datetime import date
 
 today = date.today()
 today_str = today.strftime("%m%d%y")
-PATH = os.path.abspath(__file__)
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def data_file(file_path):
-    full_path = os.path.join(PATH.replace("API","Data"),file_path)
+    full_path = os.path.join(os.path.dirname(PATH),"Data",file_path)
     return pd.read_csv(full_path)
 
 def make_post_data(creators):
@@ -60,7 +60,7 @@ def make_post_data(creators):
     return query
 
 def save_data(response, path):
-    path = os.path.join(PATH.replace("API","Data"),path)
+    path = os.path.join(os.path.dirname(PATH),"Data",path)
     with open(path, 'w') as f:
         json.dump(response, f)
     print(f"{path} is saved.")

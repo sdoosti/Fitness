@@ -20,7 +20,7 @@ PATH = os.path.abspath(__file__)
 FILE = "merged_comments.csv"
 
 def data_file_path(file_path):
-    return os.path.join(PATH.replace("API","Data"),file_path)
+    return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
 file_path = data_file_path(FILE)
 comments = pd.read_csv(file_path)

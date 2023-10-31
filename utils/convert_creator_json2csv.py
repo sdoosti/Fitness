@@ -17,7 +17,6 @@ changes:
 
 
 import pandas as pd
-import os
 import json
 from datetime import date
 
@@ -26,10 +25,10 @@ today_str = today.strftime("%m%d%y")
 
 #TODO #integrate the saving procedure in the api module
 
-PATH = os.path.abspath(os.getcwd())
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def data_file_path(file_path):
-    return os.path.join(PATH.replace("API","Data"),file_path)
+    return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
 def creators(path):
     with open(path, "r") as f:
@@ -79,7 +78,7 @@ def create_dataframe(data_list):
 def save_data(df, path):
     csv_path = path.replace(".json",".csv")
     print(csv_path)
-    DATA_PATH = os.path.join(PATH.replace("API","Data"),csv_path)
+    DATA_PATH = os.path.join(os.path.dirname(PATH),"Data",csv_path)
     df.to_csv(csv_path, index=False)
 
 def main(file):

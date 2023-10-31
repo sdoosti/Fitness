@@ -16,7 +16,7 @@ import pandas as pd
 from time import sleep
 import json
 
-PATH = os.path.abspath(__file__)
+PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # FILE_NAME = 
 # DATA_PATH = os.path.join(PATH.replace("API","Data"),FILE_NAME)
 
@@ -80,7 +80,7 @@ def make_post_data(theme):
 def save_data(response,terms):
     file_name = "creators_" + "_".join(terms) + ".json"
     print(file_name)
-    DATA_PATH = os.path.join(PATH.replace("API","Data"),file_name)
+    DATA_PATH = os.path.join(os.path.dirname(PATH),"Data",file_name)
     with open(DATA_PATH, "w") as f:
         json.dump(response, f)
     print(f"{file_name} is saved.")

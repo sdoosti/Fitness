@@ -24,7 +24,7 @@ comments_path = "merged_comments.csv"
 threshold = 10 # minimum number of terms for each comments (after preprocessing)
 
 def data_file_path(file_path):
-    return os.path.join(PATH.replace("API","Data"),file_path)
+    return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
 with open(data_file_path(processed_path),"r") as f:
     processed_docs = f.readlines()
