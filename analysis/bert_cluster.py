@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on 10/26/23
+Created on 11/01/23
 
 @author: Shahryar Doosti
 
 BERT Analysis on Youtube Comments
+(for cluster computing)
 """
 
 import pandas as pd
