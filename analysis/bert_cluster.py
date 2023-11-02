@@ -9,16 +9,21 @@ BERT Analysis on Youtube Comments
 """
 
 import pandas as pd
+import numpy as np
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from datetime import date
 import re
+import time
+from tqdm import tqdm
+import multiprocessing
 
-
-today = date.today()
-today_str = today.strftime("%m%d%y")
+# get an argument from command line
+import sys
+threshold = int(sys.argv[1])
 
 PATH = os.path.abspath(os.getcwd())
+
 
 processed_path = "processed_comments_102423.txt"
 comments_path = "merged_comments.csv"
@@ -32,8 +37,8 @@ comments = pd.read_csv(data_file_path(comments_path))
 comments = comments[comments.comment_text.notnull()].copy()
 comments['processed_text'] = [re.sub("\d+", "", x.strip())for x in processed_docs]
 comments['length'] = comments.processed_text.apply(lambda x: len(x.split(',')))
-#comments['include'] = comments.length > threshold
-#comments = comments[comments.include].copy()
+comments['include'] = comments.length > 10
+comments = comments[comments.include].copy()
 
 docs = comments.processed_text.to_list()
 
@@ -47,7 +52,7 @@ bert_model = AutoModel.from_pretrained('bert-base-uncased')
 
 def vectorize_texts(texts):
     embeddings = []
-    for text in texts:
+    for text in tqdm(texts):
         # Encode the text and return tensors
         encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
         # Get the model's output
@@ -58,22 +63,40 @@ def vectorize_texts(texts):
         embeddings.append(hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy())
     return embeddings
 
-# Use the function
-text_embeddings = vectorize_texts(docs)
+# a function to get the embeddings of a text fast
+def get_embeddings(text):
+    encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+    output = bert_model(**encoded_inputs)
+    hidden_states = output.last_hidden_state
+    return hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
 
-with open(data_file_path("bert_embeddings.txt"),"w") as f:
-    f.write(str(text_embeddings)
-            
-len(text_embeddings)
+# write the embedding function in parallel
+def parallelize_vectorize_texts(texts, num_cores=4):
+    pool = multiprocessing.Pool(num_cores)
+    embeddings = pool.map(get_embeddings, texts)
+    pool.close()
+    pool.join()
+    return embeddings
+
+a = time.time()
+text_embeddings = vectorize_texts(docs[:threshold])
+#text_embeddings = [get_embeddings(text) for text in tqdm(docs[:threshold])]
+#text_embeddings = parallelize_vectorize_texts(docs[:threshold])
+b = time.time()
+
+print(f'Time taken: {b-a} seconds for {threshold} comments')
+
+# with open(data_file_path("bert_embeddings.txt"),"w") as f:
+#     f.write(str(text_embeddings))
+
+np.save(data_file_path("bert_embeddings.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
 
 
 
 
 
 
-
-
-
+"""
 # TF-IDF
 # create object
 tfidf = TfidfVectorizer(max_features=20000, min_df = 0.001, max_df=0.1)
@@ -147,3 +170,4 @@ topic_df = topic_df[topic_df.dom_topic_weight>0.1].copy()
 # removing non-english comments
 
 print(today_str)
+"""
