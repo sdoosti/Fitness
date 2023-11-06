@@ -89,12 +89,10 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        if not last_hidden:
+            encoded['output_hidden_states'] = True
         with torch.no_grad():
-            if last_hidden:
-                hidden_states = None
-            else:
-                hidden_state = True
-            outputs = bert_model(**encoded, output_hidden_states=hidden_states)
+            outputs = bert_model(**encoded)
         if last_hidden:
             outputs = outputs.last_hidden_state
         else:
