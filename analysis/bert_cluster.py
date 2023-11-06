@@ -86,6 +86,7 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         return (numpy.ndarray): embeddings of the texts
     """
     for idx in tqdm(range(0, len(texts), batch_size)):
+        docs_embeddings = []
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
@@ -104,17 +105,18 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
             outputs = torch.stack([states[i] for i in layers]).sum(0).squeeze()
 
         if embeddings == 'word':
-            return outputs.detach().numpy()
+            docs_embeddings.append(outputs.detach().numpy())
         elif embeddings == 'sentence':
             cls_embeddings = outputs[:,0,:]
-            return cls_embeddings.detach().numpy()
+            docs_embeddings.append(cls_embeddings.detach().numpy())
         else:
             attention = encoded['attention_mask'].reshape((outputs.size()[0], outputs.size()[1], -1)).expand(-1, -1, 768)
             pooled_embeddings = torch.mul(outputs, attention)
             denominator = torch.count_nonzero(pooled_embeddings, dim=1)
             summation = torch.sum(embeddings, dim=1)
             mean_embeddings = torch.div(summation, denominator)
-            return mean_embeddings.detach().numpy()
+            docs_embeddings.append(mean_embeddings.detach().numpy())
+    return np.vstack(docs_embeddings)
 
 # find cluster of similar comments using text embeddings
 def find_similar_comments(text_embeddings, threshold=0.9):
