@@ -16,8 +16,10 @@ from datetime import date
 import re
 import time
 from tqdm import tqdm
-import multiprocessing
+#import multiprocessing
 import torch
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.spatial.distance import cosine
 
 # get an argument from command line
 import sys
@@ -116,38 +118,6 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
             mean_embeddings = torch.div(summation, denominator)
             return mean_embeddings.detach().numpy()
 
-
-def find_similar_comments(text_embeddings, threshold=0.9):
-    similar_comments = []
-    for i, embedding in enumerate(text_embeddings):
-        # find similarity of the embedding with all other embeddings
-        similarities = []
-        for j, other_embedding in enumerate(text_embeddings):
-            if i != j:
-                similarities.append(cosine_similarity(embedding.mean(0).reshape(1,-1), other_embedding.mean(0).reshape(1,-1))[0][0])
-            else:
-                similarities.append(0)
-        # find the indexes of similar embeddings
-        print(similarities)
-        most_similar_index = np.argmax(np.array(similarities))
-        # add the indexes to the list
-        similar_comments.append(most_similar_index)
-    return similar_comments
-
-# write the embedding function in parallel
-def parallelize_vectorize_texts(texts, num_cores=4):
-    pool = multiprocessing.Pool(num_cores)
-    embeddings = pool.map(get_embeddings, texts)
-    pool.close()
-    pool.join()
-    return embeddings
-
-
-text_embeddings = np.load(data_file_path("bert_embeddings.npy"), allow_pickle=True)
-
-# find similar comments
-from sklearn.metrics.pairwise import cosine_similarity
-from scipy.spatial.distance import cosine
 # find cluster of similar comments using text embeddings
 def find_similar_comments(text_embeddings, threshold=0.9):
     similar_comments = []
@@ -165,25 +135,12 @@ def find_similar_comments(text_embeddings, threshold=0.9):
         similar_comments.append(most_similar_index)
     return similar_comments
 
-
-a = time.time()
-text_embeddings = vectorize_texts(docs[:threshold])
-#text_embeddings = [get_embeddings(text) for text in tqdm(docs[:threshold])]
-#text_embeddings = parallelize_vectorize_texts(docs[:threshold])
-b = time.time()
-
-print(f'Time taken: {b-a} seconds for {threshold} comments')
-
-# with open(data_file_path("bert_embeddings.txt"),"w") as f:
-#     f.write(str(text_embeddings))
-
-np.save(data_file_path("bert_embeddings.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
-
 def main():
     # load data
     comments, docs = load_data_files()
     # get embeddings
-    text_embeddings = vectorize_texts(docs)
+    text_embeddings = get_embeddings_batch(docs)
+    np.save(data_file_path("bert_embeddings.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
     # find similar comments
     similar_comments = find_similar_comments(text_embeddings)
     # add similar comments to the dataframe
@@ -193,6 +150,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #text_embeddings = np.load(data_file_path("bert_embeddings.npy"), allow_pickle=True)
+
 
 
 """
