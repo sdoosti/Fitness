@@ -25,23 +25,26 @@ import sys
 
 PATH = os.path.abspath(os.getcwd())
 
-
-processed_path = "processed_comments_102423.txt"
-comments_path = "merged_comments.csv"
-
 def data_file_path(file_path):
     return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
-with open(data_file_path(processed_path),"r") as f:
-    processed_docs = f.readlines()
-comments = pd.read_csv(data_file_path(comments_path))
-comments = comments[comments.comment_text.notnull()].copy()
-comments['processed_text'] = [re.sub("\d+", "", x.strip())for x in processed_docs]
-comments['length'] = comments.processed_text.apply(lambda x: len(x.split(',')))
-comments['include'] = comments.length > 10
-comments = comments[comments.include].copy()
-
-docs = comments.processed_text.to_list()
+def load_data_files(processed_path="processed_comments_102423.txt", comments_path="merged_comments.csv", comment_length=10):
+    """ This function loads the processed comments and the original comments and returns the processed comments and the original comments in a dataframe.
+       processed_path (str): processed comments file name
+       comments_path (str): original comments file name
+       comments_length (int): minimum number of words in a comment
+       return (pandas.DataFrame, list): processed comments and original comments in a dataframe  """
+    with open(data_file_path(processed_path),"r") as f:
+        processed_docs = f.readlines()
+    comments = pd.read_csv(data_file_path(comments_path))
+    comments = comments[comments.comment_text.notnull()].copy()
+    comments['processed_text'] = [re.sub("\d+", "", x.strip())for x in processed_docs]
+    comments['length'] = comments.processed_text.apply(lambda x: len(x.split(',')))
+    if comment_length is not None:
+        comments['include'] = comments.length > comment_length
+        comments = comments[comments.include].copy()
+    docs = comments.processed_text.to_list()
+    return comments, docs
 
 # BERT
 from transformers import AutoModel, AutoTokenizer
@@ -80,7 +83,7 @@ def vectorize_texts(texts):
 for idx in range(0, len(docs[:500]), 100):
     batch = docs[idx : min(len(docs[:500]), idx+100)]
     # encoded = tokenizer(batch)
-    encoded = tokenizer.batch_encode_plus(batch,max_length=50, padding='max_length', truncation=True)
+    encoded = tokenizer.batch_encode_plus(batch,max_length=100, padding='max_length', truncation=True)
     encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
     with torch.no_grad():
         outputs = bert_model(**encoded)
