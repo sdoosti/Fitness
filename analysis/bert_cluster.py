@@ -17,10 +17,11 @@ import re
 import time
 from tqdm import tqdm
 import multiprocessing
+import torch
 
 # get an argument from command line
 import sys
-threshold = int(sys.argv[1])
+#threshold = int(sys.argv[1])
 
 PATH = os.path.abspath(os.getcwd())
 
@@ -50,6 +51,7 @@ tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 # Initialize the BERT model
 bert_model = AutoModel.from_pretrained('bert-base-uncased')
 
+# a function to vectorize texts
 def vectorize_texts(texts):
     embeddings = []
     for text in tqdm(texts):
@@ -70,6 +72,44 @@ def get_embeddings(text):
     hidden_states = output.last_hidden_state
     return hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
 
+# another way to vectorize texts
+def vectorize_texts(texts):
+    with torch.no_grad():
+        output = bert_model(**tokenizer(texts, return_tensors='pt', padding=True, truncation=True))
+
+for idx in range(0, len(docs[:500]), 100):
+    batch = docs[idx : min(len(docs[:500]), idx+100)]
+    # encoded = tokenizer(batch)
+    encoded = tokenizer.batch_encode_plus(batch,max_length=50, padding='max_length', truncation=True)
+    encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+    with torch.no_grad():
+        outputs = bert_model(**encoded)
+    print(outputs.last_hidden_state.size())
+    lhs = outputs.last_hidden_state
+    attention = encoded['attention_mask'].reshape((lhs.size()[0], lhs.size()[1], -1)).expand(-1, -1, 768)
+    embeddings = torch.mul(lhs, attention)
+    denominator = torch.count_nonzero(embeddings, dim=1)
+    summation = torch.sum(embeddings, dim=1)
+    mean_embeddings = torch.div(summation, denominator)
+
+
+def find_similar_comments(text_embeddings, threshold=0.9):
+    similar_comments = []
+    for i, embedding in enumerate(text_embeddings):
+        # find similarity of the embedding with all other embeddings
+        similarities = []
+        for j, other_embedding in enumerate(text_embeddings):
+            if i != j:
+                similarities.append(cosine_similarity(embedding.mean(0).reshape(1,-1), other_embedding.mean(0).reshape(1,-1))[0][0])
+            else:
+                similarities.append(0)
+        # find the indexes of similar embeddings
+        print(similarities)
+        most_similar_index = np.argmax(np.array(similarities))
+        # add the indexes to the list
+        similar_comments.append(most_similar_index)
+    return similar_comments
+
 # write the embedding function in parallel
 def parallelize_vectorize_texts(texts, num_cores=4):
     pool = multiprocessing.Pool(num_cores)
@@ -77,6 +117,30 @@ def parallelize_vectorize_texts(texts, num_cores=4):
     pool.close()
     pool.join()
     return embeddings
+
+
+text_embeddings = np.load(data_file_path("bert_embeddings.npy"), allow_pickle=True)
+
+# find similar comments
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.spatial.distance import cosine
+# find cluster of similar comments using text embeddings
+def find_similar_comments(text_embeddings, threshold=0.9):
+    similar_comments = []
+    for i, embedding in enumerate(text_embeddings):
+        # find similarity of the embedding with all other embeddings
+        similarities = []
+        for j, other_embedding in enumerate(text_embeddings):
+            if i != j:
+                similarities.append(cosine_similarity(embedding.mean(0).reshape(1,-1), other_embedding.mean(0).reshape(1,-1))[0][0])
+            else:
+                similarities.append(0)
+        # find the indexes of similar embeddings
+        most_similar_index = np.argmax(np.array(similarities))
+        # add the indexes to the list
+        similar_comments.append(most_similar_index)
+    return similar_comments
+
 
 a = time.time()
 text_embeddings = vectorize_texts(docs[:threshold])
