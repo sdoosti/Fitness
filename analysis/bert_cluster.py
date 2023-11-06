@@ -85,7 +85,7 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         max_length (int): maximum length of the documents in the batch mode
         return (numpy.ndarray): embeddings of the texts
     """
-    for idx in range(0, len(texts), batch):
+    for idx in tqdm(range(0, len(texts), batch)):
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
