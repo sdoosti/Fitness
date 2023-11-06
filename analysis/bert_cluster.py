@@ -104,17 +104,17 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
             outputs = torch.stack([states[i] for i in layers]).sum(0).squeeze()
 
         if embeddings == 'word':
-            return outputs
+            return outputs.detach().numpy()
         elif embeddings == 'sentence':
             cls_embeddings = outputs[:,0,:]
-            return cls_embeddings
+            return cls_embeddings.detach().numpy()
         else:
             attention = encoded['attention_mask'].reshape((outputs.size()[0], outputs.size()[1], -1)).expand(-1, -1, 768)
             pooled_embeddings = torch.mul(outputs, attention)
             denominator = torch.count_nonzero(pooled_embeddings, dim=1)
             summation = torch.sum(embeddings, dim=1)
             mean_embeddings = torch.div(summation, denominator)
-            return mean_embeddings
+            return mean_embeddings.detach().numpy()
 
 
 def find_similar_comments(text_embeddings, threshold=0.9):
