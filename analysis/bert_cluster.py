@@ -25,6 +25,14 @@ import sys
 
 PATH = os.path.abspath(os.getcwd())
 
+# load the BERT model
+from transformers import AutoModel, AutoTokenizer
+# Initialize the BERT tokenizer
+tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+# Initialize the BERT model
+bert_model = AutoModel.from_pretrained('bert-base-uncased')
+
+
 def data_file_path(file_path):
     return os.path.join(os.path.dirname(PATH),"Data",file_path)
 
@@ -46,39 +54,22 @@ def load_data_files(processed_path="processed_comments_102423.txt", comments_pat
     docs = comments.processed_text.to_list()
     return comments, docs
 
-# BERT
-from transformers import AutoModel, AutoTokenizer
-# Initialize the BERT tokenizer
-tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
-
-# Initialize the BERT model
-bert_model = AutoModel.from_pretrained('bert-base-uncased')
-
-# a function to vectorize texts
-def vectorize_texts(texts):
-    embeddings = []
-    for text in tqdm(texts):
-        # Encode the text and return tensors
-        encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
-        # Get the model's output
-        output = bert_model(**encoded_inputs)
-        # Get the hidden states
-        hidden_states = output.last_hidden_state
-        # Reshape the tensor and detach it from the current graph
-        embeddings.append(hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy())
-    return embeddings
-
-# a function to get the embeddings of a text fast
-def get_embeddings(text):
+def get_embeddings(text, sentence_embeddings=True, last_hidden = True):
+    """This function extracts the embeddings of the text using BERT model.  It returns the embeddings of the text.
+       text (str): text to be embedded
+       sentence_embeddings (bool): if True, the function returns the sentence embedding of the text, if False, the function returns the word embeddings of the text.
+       last_hidden (bool): if True, the function returns the last hidden state of the text, if False, the function returns the pooled output of the text.
+       return (numpy.ndarray): embeddings of the text"""
+    # Encode the text and return tensors
     encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
-    output = bert_model(**encoded_inputs)
-    hidden_states = output.last_hidden_state
-    return hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
-
-# another way to vectorize texts
-def vectorize_texts(texts):
+    # Get the model's output
     with torch.no_grad():
-        output = bert_model(**tokenizer(texts, return_tensors='pt', padding=True, truncation=True))
+        output = bert_model(**encoded_inputs)
+    # Get the hidden states
+    hidden_states = output.last_hidden_state
+    # Reshape the tensor and detach it from the current graph
+    embeddings = hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
+    return embeddings
 
 for idx in range(0, len(docs[:500]), 100):
     batch = docs[idx : min(len(docs[:500]), idx+100)]
@@ -158,9 +149,20 @@ print(f'Time taken: {b-a} seconds for {threshold} comments')
 
 np.save(data_file_path("bert_embeddings.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
 
+def main():
+    # load data
+    comments, docs = load_data_files()
+    # get embeddings
+    text_embeddings = vectorize_texts(docs)
+    # find similar comments
+    similar_comments = find_similar_comments(text_embeddings)
+    # add similar comments to the dataframe
+    comments['similar_comment'] = similar_comments
+    # save the dataframe
+    comments.to_csv(data_file_path("similar_comments.csv"), index=False)
 
-
-
+if __name__ == "__main__":
+    main()
 
 
 """
