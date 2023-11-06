@@ -71,20 +71,50 @@ def get_embeddings(text, sentence_embeddings=True, last_hidden = True):
     embeddings = hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
     return embeddings
 
-for idx in range(0, len(docs[:500]), 100):
-    batch = docs[idx : min(len(docs[:500]), idx+100)]
-    # encoded = tokenizer(batch)
-    encoded = tokenizer.batch_encode_plus(batch,max_length=100, padding='max_length', truncation=True)
-    encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
-    with torch.no_grad():
-        outputs = bert_model(**encoded)
-    print(outputs.last_hidden_state.size())
-    lhs = outputs.last_hidden_state
-    attention = encoded['attention_mask'].reshape((lhs.size()[0], lhs.size()[1], -1)).expand(-1, -1, 768)
-    embeddings = torch.mul(lhs, attention)
-    denominator = torch.count_nonzero(embeddings, dim=1)
-    summation = torch.sum(embeddings, dim=1)
-    mean_embeddings = torch.div(summation, denominator)
+def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_size=100, max_length=50):
+    """ This function extracts the embeddings of the texts using BERT model in batch mode (multiple documents)
+        texts (list): list of texts to be embedded
+        embeddings (str): ['word', 'sentence', 'pooled']
+            'word': returns the word embeddings of the text
+            'sentence': returns the sentence embedding of the text represented by [CLS] token
+            'pooled': returns the pooled output of the text by average word embdeddings.
+        last_hidden (bool): if True, the function returns the last hidden state of the text, if False, the function returns the either word embeddings or pooled output of the text.
+        batch_size (int): number of documents to be embedded in each batch
+        max_length (int): maximum length of the documents in the batch mode
+        return (numpy.ndarray): embeddings of the texts
+    """
+    for idx in range(0, len(texts), batch):
+        batch = texts[idx : min(len(texts), idx+batch_size)]
+        encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
+        encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        with torch.no_grad():
+            if last_hidden:
+                hidden_states = None
+            else:
+                hidden_state = True
+            outputs = bert_model(**encoded, output_hidden_states=hidden_states)
+        if last_hidden:
+            outputs = outputs.last_hidden_state
+        else:
+            # selecting the last 4 layers
+            layers = [-4,-3,-2,-1]
+            # Get all hidden states
+            states = outputs.hidden_states
+            # Stack and sum all requested layers
+            outputs = torch.stack([states[i] for i in layers]).sum(0).squeeze()
+
+        if embeddings == 'word':
+            return outputs
+        elif embeddings == 'sentence':
+            cls_embeddings = outputs[:,0,:]
+            return cls_embeddings
+        else:
+            attention = encoded['attention_mask'].reshape((outputs.size()[0], outputs.size()[1], -1)).expand(-1, -1, 768)
+            pooled_embeddings = torch.mul(outputs, attention)
+            denominator = torch.count_nonzero(pooled_embeddings, dim=1)
+            summation = torch.sum(embeddings, dim=1)
+            mean_embeddings = torch.div(summation, denominator)
+            return mean_embeddings
 
 
 def find_similar_comments(text_embeddings, threshold=0.9):
