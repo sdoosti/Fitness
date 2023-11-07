@@ -27,6 +27,9 @@ import sys
 
 PATH = os.path.abspath(os.getcwd())
 
+# today's date in format of DDMMYY string
+today_str = date.today().strftime("%d%m%y")
+
 # load the BERT model
 from transformers import AutoModel, AutoTokenizer
 # Initialize the BERT tokenizer
@@ -73,7 +76,7 @@ def get_embeddings(text, sentence_embeddings=True, last_hidden = True):
     embeddings = hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
     return embeddings
 
-def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_size=100, max_length=50):
+def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_size=1000, max_length=50):
     """ This function extracts the embeddings of the texts using BERT model in batch mode (multiple documents)
         texts (list): list of texts to be embedded
         embeddings (str): ['word', 'sentence', 'pooled']
@@ -135,12 +138,15 @@ def find_similar_comments(text_embeddings, threshold=0.9):
         similar_comments.append(most_similar_index)
     return similar_comments
 
+def save_embeddings(text_embeddings, embedding_format = 'word', optional_tag=''):
+    np.save(data_file_path(f"bert_embeddings_{len(text_embeddings)}docs_{embedding_format}_{optional_tag}{today_str}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
+
 def main(embedding_format = 'word'):
     # load data
     comments, docs = load_data_files()
     # get embeddings
     text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100)
-    np.save(data_file_path(f"bert_embeddings_{embedding_format}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
+    np.save(data_file_path(f"bert_embeddings_{len(docs)}docs_{embedding_format}_{today_str}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
     # find similar comments
     #similar_comments = find_similar_comments(text_embeddings)
     # add similar comments to the dataframe
