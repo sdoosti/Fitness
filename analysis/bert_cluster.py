@@ -135,11 +135,10 @@ def find_similar_comments(text_embeddings, threshold=0.9):
         similar_comments.append(most_similar_index)
     return similar_comments
 
-def main():
+def main(embedding_format = 'word'):
     # load data
     comments, docs = load_data_files()
     # get embeddings
-    embedding_format = 'sentence'
     text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100)
     np.save(data_file_path(f"bert_embeddings_{embedding_format}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
     # find similar comments
