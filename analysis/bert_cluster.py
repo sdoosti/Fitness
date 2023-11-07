@@ -89,7 +89,7 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         return (numpy.ndarray): embeddings of the texts
     """
     docs_embeddings = []
-    for idx in tqdm(range(0, len(texts), batch_size)):
+    for idx in range(0, len(texts), batch_size):
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
@@ -145,8 +145,13 @@ def main(embedding_format = 'word'):
     # load data
     comments, docs = load_data_files()
     # get embeddings
-    text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100)
-    np.save(data_file_path(f"bert_embeddings_{len(docs)}docs_{embedding_format}_{today_str}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
+    # batch processing
+    for ind in tqdm(range(0, len(docs), 30000)):
+        text_embeddings = get_embeddings_batch(docs[ind:ind+30000], embeddings=embedding_format, max_length=100, batch_size=1000)
+        save_embeddings(text_embeddings, embedding_format, optional_tag=f"{ind}_")
+    # for no batch processing uncomment the following line
+    #text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100)
+    #np.save(data_file_path(f"bert_embeddings_{len(docs)}docs_{embedding_format}_{today_str}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
     # find similar comments
     #similar_comments = find_similar_comments(text_embeddings)
     # add similar comments to the dataframe
