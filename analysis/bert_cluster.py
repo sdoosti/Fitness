@@ -44,7 +44,7 @@ def load_data_files(processed_path="processed_comments_102423.txt", comments_pat
        comments_path (str): original comments file name
        comments_length (int): minimum number of words in a comment
        return (pandas.DataFrame, list): processed comments and original comments in a dataframe  """
-    with open(data_file_path(processed_path),"r") as f:
+    with open(data_file_path(processed_path),"r", encoding="utf-8") as f:
         processed_docs = f.readlines()
     comments = pd.read_csv(data_file_path(comments_path))
     comments = comments[comments.comment_text.notnull()].copy()
@@ -85,8 +85,8 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         max_length (int): maximum length of the documents in the batch mode
         return (numpy.ndarray): embeddings of the texts
     """
+    docs_embeddings = []
     for idx in tqdm(range(0, len(texts), batch_size)):
-        docs_embeddings = []
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
@@ -148,10 +148,12 @@ def main():
     #comments['similar_comment'] = similar_comments
     # save the dataframe
     #comments.to_csv(data_file_path("similar_comments.csv"), index=False)
+    return text_embeddings
 
 if __name__ == "__main__":
-    main()
+    text_embeddings = main()
     #text_embeddings = np.load(data_file_path("bert_embeddings.npy"), allow_pickle=True)
+    print(text_embeddings.shape)
 
 
 
