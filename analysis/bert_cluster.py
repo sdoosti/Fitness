@@ -89,7 +89,7 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
         return (numpy.ndarray): embeddings of the texts
     """
     docs_embeddings = []
-    for idx in range(0, len(texts), batch_size):
+    for idx in tqdm(range(0, len(texts), batch_size)):
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
         encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
