@@ -139,14 +139,15 @@ def main():
     # load data
     comments, docs = load_data_files()
     # get embeddings
-    text_embeddings = get_embeddings_batch(docs)
-    np.save(data_file_path("bert_embeddings.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
+    embedding_format = 'sentence'
+    text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100)
+    np.save(data_file_path(f"bert_embeddings_{embedding_format}.npy"), np.array(text_embeddings, dtype=object), allow_pickle=True)
     # find similar comments
-    similar_comments = find_similar_comments(text_embeddings)
+    #similar_comments = find_similar_comments(text_embeddings)
     # add similar comments to the dataframe
-    comments['similar_comment'] = similar_comments
+    #comments['similar_comment'] = similar_comments
     # save the dataframe
-    comments.to_csv(data_file_path("similar_comments.csv"), index=False)
+    #comments.to_csv(data_file_path("similar_comments.csv"), index=False)
 
 if __name__ == "__main__":
     main()
