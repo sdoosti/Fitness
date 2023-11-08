@@ -11,21 +11,22 @@ BERT Analysis on Youtube Comments
 import pandas as pd
 import numpy as np
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
 from datetime import date
 import re
 import time
 from tqdm import tqdm
-#import multiprocessing
 import torch
-from sklearn.metrics.pairwise import cosine_similarity
-from scipy.spatial.distance import cosine
 
 # get an argument from command line
 import sys
 #threshold = int(sys.argv[1])
 
 PATH = os.path.abspath(os.getcwd())
+
+# gpu device
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+print(f"using {device}")
 
 # today's date in format of DDMMYY string
 today_str = date.today().strftime("%d%m%y")
@@ -36,7 +37,8 @@ from transformers import AutoModel, AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 # Initialize the BERT model
 bert_model = AutoModel.from_pretrained('bert-base-uncased')
-
+# Move the model to the GPU
+bert_model = bert_model.to(device)
 
 def data_file_path(file_path):
     return os.path.join(os.path.dirname(PATH),"Data",file_path)
@@ -66,14 +68,14 @@ def get_embeddings(text, sentence_embeddings=True, last_hidden = True):
        last_hidden (bool): if True, the function returns the last hidden state of the text, if False, the function returns the pooled output of the text.
        return (numpy.ndarray): embeddings of the text"""
     # Encode the text and return tensors
-    encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
+    encoded_inputs = tokenizer(text, return_tensors='pt', padding=True, truncation=True).to(device)
     # Get the model's output
     with torch.no_grad():
         output = bert_model(**encoded_inputs)
     # Get the hidden states
     hidden_states = output.last_hidden_state
     # Reshape the tensor and detach it from the current graph
-    embeddings = hidden_states.view(-1, hidden_states.shape[-1]).detach().numpy()
+    embeddings = hidden_states.view(-1, hidden_states.shape[-1]).detach().cpu().numpy()
     return embeddings
 
 def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_size=1000, max_length=50):
@@ -92,7 +94,7 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
     for idx in tqdm(range(0, len(texts), batch_size)):
         batch = texts[idx : min(len(texts), idx+batch_size)]
         encoded = tokenizer.batch_encode_plus(batch,max_length=max_length, padding='max_length', truncation=True)
-        encoded = {key:torch.LongTensor(value) for key, value in encoded.items()}
+        encoded = {key:torch.LongTensor(value).to(device) for key, value in encoded.items()}
         if not last_hidden:
             encoded['output_hidden_states'] = True
         with torch.no_grad():
@@ -108,17 +110,17 @@ def get_embeddings_batch(texts, embeddings='word', last_hidden = True, batch_siz
             outputs = torch.stack([states[i] for i in layers]).sum(0).squeeze()
 
         if embeddings == 'word':
-            docs_embeddings.append(outputs.detach().numpy())
+            docs_embeddings.append(outputs.detach().cpu().numpy())
         elif embeddings == 'sentence':
             cls_embeddings = outputs[:,0,:]
-            docs_embeddings.append(cls_embeddings.detach().numpy())
+            docs_embeddings.append(cls_embeddings.detach().cpu().numpy())
         else:
             attention = encoded['attention_mask'].reshape((outputs.size()[0], outputs.size()[1], -1)).expand(-1, -1, 768)
             pooled_embeddings = torch.mul(outputs, attention)
             denominator = torch.count_nonzero(pooled_embeddings, dim=1)
             summation = torch.sum(embeddings, dim=1)
             mean_embeddings = torch.div(summation, denominator)
-            docs_embeddings.append(mean_embeddings.detach().numpy())
+            docs_embeddings.append(mean_embeddings.detach().cpu().numpy())
     return np.vstack(docs_embeddings)
 
 # find cluster of similar comments using text embeddings
