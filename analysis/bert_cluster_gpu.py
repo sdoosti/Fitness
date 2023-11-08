@@ -130,7 +130,8 @@ def main(embedding_format = 'word'):
     # load data
     comments, docs = load_data_files()
     # get embeddings
-    text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=100, batch_size=1000)
+    #TODO: add a version for the original comments (not processed)
+    text_embeddings = get_embeddings_batch(docs, embeddings=embedding_format, max_length=150, batch_size=1000)
     save_embeddings(text_embeddings, embedding_format)
     return text_embeddings
 
