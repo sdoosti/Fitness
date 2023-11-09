@@ -112,4 +112,25 @@ def tsne_calc(data,perplexity=50,n_neighbors=500,version='tokens',save=True):
         df_transformed.to_csv(os.path.join(DATA_PATH, f"tsne_{version}_perp{perplexity}_n{n_neighbors}.csv"),index=False)
     return df_transformed
 
+def main():
+    # Load the data
+    comments = load_data_file()
+    # Load the embeddings
+    embeddings = load_embeddings()
+    # Perform kmeans clustering
+    labels, score = kmeans_clustering(embeddings)
+    # Save the cluster labels
+    save_cluster_labels(comments, labels)
+    # Calculate the cluster centers
+    centers = calculate_cluster_centers(embeddings, labels)
+    # Calculate the cluster sizes
+    sizes = calculate_cluster_sizes(labels)
+    # Calculate the t-SNE embeddings
+    tsne = tsne_calc(embeddings)
+    print(f"silhouette score: {score}")
+    print(f"cluster sizes: {sizes}")
+    print(f"cluster centers: {centers}")
+    print(f"t-SNE embeddings: {tsne}")
 
+if __name__ == "__main__":
+    main()
