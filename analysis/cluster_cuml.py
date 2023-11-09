@@ -40,6 +40,7 @@ def load_embeddings(version='tokens', gpu=True):
         #embeddings = numba.cuda.to_device(embeddings)
         embd_dict = {'fea%d'%i:embeddings[:,i] for i in range(embeddings.shape[1])}
         return cudf.DataFrame(embd_dict)
+        #TODO: replace this with cupy array
     else:
         return embeddings
 
