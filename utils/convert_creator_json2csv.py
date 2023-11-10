@@ -49,21 +49,21 @@ def create_csv_row(creator_dict):
                     
     """
     gid = creator_dict['accounts']['youtube']['gid']
-    # for account in creator_dict['accounts']:
-    #     if account['platform'] == 'youtube':
-    #         gid = account['gid']
-    #         break
-    # return([creator_dict['creator_id'],
-    #         creator_dict['title'],
-    #         creator_dict['type'],
-    #         gid,
-    #         creator_dict['country'],
-    #         creator_dict['language'],
-    #         creator_dict['genre']['title'],
-    #         creator_dict['industry']['title'],
-    #         creator_dict['uploads_90d'],
-    #         creator_dict['views'],
-    #         creator_dict['last_upload_date']])
+    for account in creator_dict['accounts']:
+        if account['platform'] == 'youtube':
+            gid = account['gid']
+            break
+    return([creator_dict['creator_id'],
+            creator_dict['title'],
+            creator_dict['type'],
+            gid,
+            creator_dict['country'],
+            creator_dict['language'],
+            creator_dict['genre']['title'],
+            creator_dict['industry']['title'],
+            creator_dict['uploads_90d'],
+            creator_dict['views'],
+            creator_dict['last_upload_date']])
 
 def create_csv(creator_list):
     data_list = []
