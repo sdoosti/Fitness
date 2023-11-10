@@ -133,5 +133,24 @@ def main():
     print(f"cluster centers: {centers}")
     print(f"t-SNE embeddings: {tsne}")
 
+def parameters_search():
+    # this function explores the parameters of kmeans clustering
+    # Load the data
+    comments = load_data_file()
+    # Load the embeddings
+    embeddings = load_embeddings()
+    # Perform kmeans clustering
+    for n_clusters in range(5, 50, 5):
+        labels, score = kmeans_clustering(embeddings, n_clusters=n_clusters)
+        # Save the cluster labels
+        #save_cluster_labels(comments, labels)
+        # Calculate the cluster centers
+        centers = calculate_cluster_centers(embeddings, labels)
+        # Calculate the cluster sizes
+        sizes = calculate_cluster_sizes(labels)
+        print(f"silhouette score: {score}")
+        print(f"cluster sizes: {sizes}")
+        #print(f"cluster centers: {centers}")
+
 if __name__ == "__main__":
     main()
