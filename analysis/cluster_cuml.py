@@ -90,7 +90,7 @@ def save_cluster_labels(comments, labels, version='tokens'):
        comments (cudf.DataFrame): original comments
        labels (numpy.ndarray): cluster labels
        version (str): lowercase, original, or tokens  """
-    comments['cluster'] = labels
+    comments['cluster'] = labels.values
     comments.to_csv(os.path.join(DATA_PATH, f"comments_cluster_{version}.csv"),index=False)
 
 def calculate_cluster_centers(embeddings, labels):
