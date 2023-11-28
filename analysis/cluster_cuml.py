@@ -163,7 +163,7 @@ def main(method='kmeans', version= 'tokens', save=False, details=False, sil_scor
         # Calculate the cluster sizes
         sizes = calculate_cluster_sizes(labels)
         # Calculate the t-SNE embeddings
-        tsne = tsne_calc(embeddings)
+        tsne = tsne_calc(embeddings, version=version, save=save)
         print(f"silhouette score: {score}")
         print(f"cluster sizes: {sizes}")
         print(f"cluster centers: {centers}")
@@ -193,8 +193,8 @@ def parameters_search(method='kmeans', n_samples = 10000, version = 'tokens'):
         print("Performing dbscan clustering...")
         for eps in range(20,30):
             for min_samples in [1000,2000,5000]:
-                if (eps != 22) or (min_samples != 1000):
-                    continue
+                # if (eps != 22) or (min_samples != 1000):
+                #     continue
                 labels = dbscan_clustering(embeddings, eps=eps/5, min_samples=min_samples)
                 print('-'*50)
                 print('eps: ', eps/5, 'min_samples: ', min_samples)
