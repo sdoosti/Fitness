@@ -1,7 +1,13 @@
 import cudf
 from cuml.cluster import KMeans
 from cuml.manifold import TSNE
-from cuml.metrics import silhouette_score
+from cuml.metrics.cluster.silhouette_score import cython_silhouette_score as silhouette_score
+from cuml import DBSCAN
+#from cuml.metrics.cluster import adjusted_rand_score
+
+# import RecurssionError
+import sys
+sys.setrecursionlimit(100000)
 
 import numpy as np
 import pandas as pd
@@ -59,9 +65,25 @@ def kmeans_clustering(data, n_clusters=20):
     model.fit(data)
     # Predict the clusters
     labels = model.predict(data)
-    # Calculate silhouette score
-    score = silhouette_score(data, labels)
-    return labels, score
+    return labels
+
+# DBSCAN clustering
+def dbscan_clustering(data, eps = 4.4, min_samples = 1000):
+    """ This function performs dbscan clustering on the embeddings and returns the cluster labels.
+       data (cudf.DataFrame): embeddings
+       eps (float): epsilon
+       min_samples (int): minimum number of samples
+         return (numpy.ndarray): cluster labels  """
+    # Ensure the data is in the format expected by cuml functions
+    if not isinstance(data, cudf.DataFrame):
+        data = cudf.DataFrame(data)
+    # Create a DBSCAN model
+    model = DBSCAN(eps=eps, min_samples=min_samples)
+    # Fit the model to the data
+    model.fit(data)
+    # Predict the clusters
+    labels = model.labels_
+    return labels
 
 def save_cluster_labels(comments, labels, version='tokens'):
     """ This function saves the cluster labels in a csv file.
@@ -113,44 +135,103 @@ def tsne_calc(data,perplexity=50,n_neighbors=500,version='tokens',save=True):
         df_transformed.to_csv(os.path.join(DATA_PATH, f"tsne_{version}_perp{perplexity}_n{n_neighbors}.csv"),index=False)
     return df_transformed
 
-def main():
+def main(method='kmeans', version= 'tokens', save=False, details=False, sil_score=False):
+    """ This function performs clustering on the embeddings and prints the results.
+       method (str): clustering method (kmeans or dbscan)
+       save (bool): if True, the cluster labels are saved in a csv file
+       details (bool): if True, the cluster centers, cluster sizes, and t-SNE embeddings are printed"""
     # Load the data
     comments = load_data_file()
     # Load the embeddings
-    embeddings = load_embeddings()
-    # Perform kmeans clustering
-    labels, score = kmeans_clustering(embeddings)
+    embeddings = load_embeddings(version=version)
+    # Perform clustering
+    if method == 'kmeans':
+        labels = kmeans_clustering(embeddings)
+    elif method == 'dbscan':
+        labels = dbscan_clustering(embeddings)
     # Save the cluster labels
-    save_cluster_labels(comments, labels)
-    # Calculate the cluster centers
-    centers = calculate_cluster_centers(embeddings, labels)
-    # Calculate the cluster sizes
-    sizes = calculate_cluster_sizes(labels)
-    # Calculate the t-SNE embeddings
-    tsne = tsne_calc(embeddings)
-    print(f"silhouette score: {score}")
-    print(f"cluster sizes: {sizes}")
-    print(f"cluster centers: {centers}")
-    print(f"t-SNE embeddings: {tsne}")
+    if save:
+        save_cluster_labels(comments, labels, version)
+    
+    if sil_score:
+        # Calculate the silhouette score
+        score = silhouette_score(embeddings, labels)
 
-def parameters_search():
-    # this function explores the parameters of kmeans clustering
-    # Load the data
-    comments = load_data_file()
-    # Load the embeddings
-    embeddings = load_embeddings()
-    # Perform kmeans clustering
-    for n_clusters in range(5, 50, 5):
-        labels, score = kmeans_clustering(embeddings, n_clusters=n_clusters)
-        # Save the cluster labels
-        #save_cluster_labels(comments, labels)
+    if details:
         # Calculate the cluster centers
         centers = calculate_cluster_centers(embeddings, labels)
         # Calculate the cluster sizes
         sizes = calculate_cluster_sizes(labels)
+        # Calculate the t-SNE embeddings
+        tsne = tsne_calc(embeddings)
         print(f"silhouette score: {score}")
         print(f"cluster sizes: {sizes}")
-        #print(f"cluster centers: {centers}")
+        print(f"cluster centers: {centers}")
+        print(f"t-SNE embeddings: {tsne}")
+
+def parameters_search(method='kmeans', n_samples = 10000, version = 'tokens'):
+    # this function explores the parameters of kmeans clustering
+    # Load the data
+    print("Loading the data...")
+    comments = load_data_file()
+    # Load the embeddings
+    print("Loading the embeddings...")
+    embeddings = load_embeddings(version=version)
+    if method == 'kmeans':
+        # Perform kmeans clustering
+        print("Performing kmeans clustering...")
+        for n_clusters in range(2, 20):
+            labels = kmeans_clustering(embeddings, n_clusters=n_clusters)
+            # Calculate the silhouette score
+            # select a random sample of 10000 rows (return index)
+            sample = embeddings.sample(n=1000).index
+            score = silhouette_score(embeddings.loc[sample], labels[sample])
+            print(f"clusters: {n_clusters}, silhouette score: {score}")
+
+    if method == 'dbscan':
+        # Perform dbscan clustering
+        print("Performing dbscan clustering...")
+        for eps in range(20,30):
+            for min_samples in [1000,2000,5000]:
+                if (eps != 22) or (min_samples != 1000):
+                    continue
+                labels = dbscan_clustering(embeddings, eps=eps/5, min_samples=min_samples)
+                print('-'*50)
+                print('eps: ', eps/5, 'min_samples: ', min_samples)
+                print(labels.value_counts())
+                if len(labels.value_counts()) < 3:
+                    continue
+                # Calculate the silhouette score
+                # select a random sample of 10000 rows (return index)
+                sample = embeddings.sample(n=n_samples).index
+                # print(labels[sample].head(20))
+                score = silhouette_score(embeddings.loc[sample], labels[sample])
+                print(f"eps: {eps}, min_samples: {min_samples}, silhouette score: {score}")
 
 if __name__ == "__main__":
-    main()
+    # get the arguments from the command line
+    function = sys.argv[1]
+    method = sys.argv[2]
+    version = sys.argv[3]
+    if function == 'main':
+        print('Running main function')
+        # if there is argument take it as input, otherwise use the default value
+        if len(sys.argv) > 4:
+            save = sys.argv[4]
+        else:
+            save = False
+        if len(sys.argv) > 5:
+            details = sys.argv[5]
+        else:
+            details = False
+        if len(sys.argv) > 6:
+            sil_score = sys.argv[6]
+        else:   
+            sil_score = False
+        main(method=method, version=version, save=save, details=details, sil_score=sil_score)
+    elif function == 'search':
+        print('Running parameters_search function')
+        parameters_search(method=method, version=version)
+    else:
+        print("Invalid function name")
+    #parameters_search(method='kmeans',version='lowercase')
