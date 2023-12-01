@@ -18,7 +18,7 @@ today = date.today()
 today_str = today.strftime("%m%d%y")
 
 # Set the path
-PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_PATH = os.path.join(PATH, "Data")
 
 # Load the data
@@ -31,7 +31,7 @@ def load_data_file(processed_file="processed_comments_102423.txt", comments_file
     with open(os.path.join(DATA_PATH,processed_file),"r", encoding="utf-8") as f:
         processed_docs = f.readlines()
     length = [len(re.sub("\d+", "", x.strip()).split(',')) for x in processed_docs]
-    comments = cudf.read_csv(os.path.join(DATA_PATH, "merged_comments.csv"))
+    comments = pd.read_csv(os.path.join(DATA_PATH, "merged_comments.csv"))
     comments = comments[comments.comment_text.notnull()].copy()
     comments['length'] = length
     comments['include'] = comments.length > comment_length
@@ -56,16 +56,9 @@ if __name__ == "__main__":
     print(today_str)
 
 
+
+
 docs = comments.processed_text.to_list()
-
-
-
-
-
-
-
-
-
 
 # TF-IDF
 # create object
@@ -97,6 +90,7 @@ for doc in [sent.split(',') for sent in docs]:
 from sklearn.preprocessing import Normalizer
 normalizer = Normalizer(norm='l2')
 tfidf_norm = normalizer.transform(result)
+tfidf_norm = (tfidf_norm + 1) / 2 # to avoid negative values
 
 from sklearn.decomposition import LatentDirichletAllocation
 
