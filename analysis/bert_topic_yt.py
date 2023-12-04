@@ -15,6 +15,8 @@ from bertopic import BERTopic
 
 DATA_PATH = "/home/doosti@chapman.edu/projects/Fitness/Data/"
 
+#TODO: the text should be lowercased
+
 # Load the data
 def load_data_file(processed_file="processed_comments_102423.txt", comments_file="merged_comments.csv", comment_length=10):
     """ This function loads the processed comments and the original comments and returns the processed comments and the original comments in a dataframe.
