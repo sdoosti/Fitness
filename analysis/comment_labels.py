@@ -11,4 +11,6 @@ print(DATA_PATH)
 
 
 # load the data
-data = pd.read_csv('train.csv')
+data = pd.read_csv(os.path.join(DATA_PATH, 'comments_for_marking_habit.csv'))
+
+data.head()
