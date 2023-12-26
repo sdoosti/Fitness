@@ -58,7 +58,7 @@ comments2 = pd.DataFrame(data={'comment_text': comments.comment_text.tolist() + 
 comments2['comment_text'] = comments2['comment_text'].str.lower()
 
 
-docs = comments['comment_text'].to_list()
+docs = comments2['comment_text'].to_list()
 
 model = Top2Vec(documents=docs, speed=speed, workers=8, embedding_model=embedding_model, keep_documents=True)
 model.save(os.path.join(DATA_PATH, f"top2vec_pluslabeled_{speed}_{embedding_model}.model"))
