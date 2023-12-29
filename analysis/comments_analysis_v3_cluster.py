@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-Created on 10/13/23
+Created on 12/29/23
 
 @author: Shahryar Doosti
 
 Analyzing youtube comments
+(Cluster computing version)
 """
 
 #%%
 import pandas as pd
 import os
 from datetime import date
+import re
+import numpy as np
+import spacy
+from spacy.lang.en.stop_words import STOP_WORDS
 
+from nltk.corpus import stopwords
+from collections import Counter
 
 today = date.today()
 today_str = today.strftime("%m%d%y")
@@ -28,14 +35,6 @@ comments = pd.read_csv(file_path)
 comments.shape
 labeled = pd.read_csv(data_file_path(NEWFILE))
 comments2 = pd.DataFrame(data={'comment_text': comments.comment_text.tolist() + labeled.comment_text.tolist()})
-
-#%%
-import re
-import numpy as np
-import spacy
-from spacy.lang.en.stop_words import STOP_WORDS
-from nltk.corpus import stopwords
-from collections import Counter
 
 print('Basic cleaning ...')     
 comments = comments2[comments2.comment_text.notnull()].copy()    
@@ -67,22 +66,34 @@ swlist = list(STOP_WORDS)
 swlist.extend(stopwords.words('english'))
 STOP_WORDS = set(swlist)
 
-#%% spacy
-nlp = spacy.load('en_core_web_sm')        
+nlp = spacy.load('en_core_web_trf') 
 
-print('Processing ...')         
-processed_docs = []    
-for doc in nlp.pipe(docs):
+def preprocessing(text, nlp):
     # Process document using Spacy NLP pipeline.
-    
+    doc = nlp(text)
     ents = doc.ents  # Named entities.
 
     # Keep only words (no numbers, no punctuation).
     # Lemmatize tokens, remove punctuation and remove stopwords.
-    doc = [token.lemma_.lower().strip() for token in doc if token.is_alpha and not token.is_stop  and token.lemma_ != '-PRON-']
+    tokens = [token.lemma_.lower().strip() for token in doc if token.is_alpha and not token.is_stop and token.lemma_ != '-PRON-' and not token.is_punct]
 
     # Add named entities, but only if they are a compound of more than word.
-    doc.extend([str(entity) for entity in ents if len(entity) > 1])
+    #tokens.extend([str(entity) for entity in ents if len(entity) > 1])
+    
+    return tokens
+
+print('Processing ...')         
+processed_docs = []    
+for doc in nlp.pip(docs):
+    
+    #ents = doc.ents  # Named entities.
+
+    # Keep only words (no numbers, no punctuation).
+    # Lemmatize tokens, remove punctuation and remove stopwords.
+    doc = [token.lemma_.lower().strip() for token in doc if token.is_alpha and not token.is_stop and token.lemma_ != '-PRON-' and not token.is_punct]
+
+    # Add named entities, but only if they are a compound of more than word.
+    #doc.extend([str(entity) for entity in ents if len(entity) > 1])
     
     processed_docs.append(doc)
     
