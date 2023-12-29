@@ -17,9 +17,6 @@ import numpy as np
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 
-from nltk.corpus import stopwords
-from collections import Counter
-
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
@@ -61,11 +58,6 @@ docs = [x.strip() for x in data]
 comments['comment_id'] = np.arange(comments.shape[0])
 doc_ids = comments.comment_id.tolist()  
 
-# combined stopwords
-swlist = list(STOP_WORDS)
-swlist.extend(stopwords.words('english'))
-STOP_WORDS = set(swlist)
-
 nlp = spacy.load('en_core_web_trf') 
 
 def preprocessing(text, nlp):
@@ -102,11 +94,10 @@ print(len(docs))
 #del processed_docs
 
 print('Saving the text ...')  
-processed_path = file_path.replace("merged_comments.csv","processed_comments_291223.txt")       
+processed_path = file_path.replace("merged_comments.csv",f"processed_comments_{today_str}.txt")       
 with open(processed_path,'w', encoding="utf-8") as f:    
     for doc in docs:
         f.write(','.join(filter(lambda x: x not in ['',' ','[]','[ ]'],doc))+'\n')
         
-
 print('Cleaning Process Completed!')
 # %%
