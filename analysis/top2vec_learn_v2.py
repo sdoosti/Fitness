@@ -37,11 +37,11 @@ print(f"Embedding model: {embedding_model}")
 print('-'*50)
 
 # Load the data
-processed_file="processed_comments_12292423.txt"
+processed_file="processed_comments_122923.txt"
 with open(os.path.join(DATA_PATH,processed_file),"r", encoding="utf-8") as f:
     processed_docs = f.readlines()
 processed_docs = [re.sub("\d+", "", x.strip()).split(',') for x in processed_docs]
-docs = [x for x in processed_docs if len(x) > 5]
+docs = [" ".join(x) for x in processed_docs if len(x) > 5]
 
 model = Top2Vec(documents=docs, speed=speed, workers=8, embedding_model=embedding_model, keep_documents=True)
 model.save(os.path.join(DATA_PATH, f"top2vec_lowercase_newpreprocessed_{speed}_{embedding_model}.model"))
