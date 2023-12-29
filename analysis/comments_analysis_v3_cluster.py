@@ -8,7 +8,6 @@ Analyzing youtube comments
 (Cluster computing version)
 """
 
-#%%
 import pandas as pd
 import os
 from datetime import date
@@ -20,7 +19,7 @@ from spacy.lang.en.stop_words import STOP_WORDS
 today = date.today()
 today_str = today.strftime("%m%d%y")
 
-PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PATH = os.path.dirname(os.path.abspath(__file__))
 FILE = "merged_comments.csv"
 NEWFILE = "comments_activity_motives.csv"
 
