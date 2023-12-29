@@ -76,7 +76,7 @@ def preprocessing(text, nlp):
 
 print('Processing ...')         
 processed_docs = []    
-for doc in nlp.pip(docs):
+for doc in nlp.pipe(docs):
     
     #ents = doc.ents  # Named entities.
 
