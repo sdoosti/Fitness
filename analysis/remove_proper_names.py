@@ -7,8 +7,8 @@ import os
 import spacy
 import re
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'Data')
-FILE = "processed_text_122923.txt"
+DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'Data')
+FILE = "processed_comments_122923.txt"
 NEWFILE = FILE.replace(".txt", "_nonames.txt")
 
 nlp = spacy.load('en_core_web_trf') # change to en_core_web_sm if you have memory issues
@@ -61,8 +61,11 @@ def main():
     """
     Main function.
     """
+    print("Loading text...")
     text = load_text()
+    print("Formatting text...")
     text = format_text(text)
+    print("Removing proper names...")
     new_text = [remove_proper_names(doc) for doc in text]
     save_text(new_text)
     print("Done!")
