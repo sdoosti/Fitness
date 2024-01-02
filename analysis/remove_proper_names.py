@@ -66,7 +66,15 @@ def main():
     print("Formatting text...")
     text = format_text(text)
     print("Removing proper names...")
-    new_text = [remove_proper_names(doc) for doc in text]
+    # instead of using the remove_proper_names function, you can use the following line
+    #new_text = [remove_proper_names(doc) for doc in text]
+    new_text = []
+    for doc in nlp.pipe(text, batch_size=1000, n_process=4):
+        #new_text.append([token for token in doc if token.ent_type_ != 'PERSON'])
+        names = [e.text for e in doc.ents if e.label_.lower() == 'person']
+        new_text.append([token for token in doc if token.text not in names])
+        
+    print("Saving text...")
     save_text(new_text)
     print("Done!")
 
