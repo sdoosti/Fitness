@@ -12,6 +12,7 @@ changes:
     - changed the function to match the json files (for some reasons the format is different with previous files)
         figured out the problem: the function is designed for creator info not trends.
         but I had to change some of the functions as I used the more recent endpoint v3.1 instead of v3
+    - added the performance csv files
 
 """
 
