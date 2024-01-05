@@ -31,6 +31,7 @@ def json2csv(video_json):
     for v in video_json:
         video_id = v['video_id']['id']
         title = v['title']
+        description = v['description']
         creator = v['publisher']['creator_name']
         creator_id = v['publisher']['creator_id']
         publish_date = v['publish_date']
@@ -56,10 +57,10 @@ def json2csv(video_json):
         else:
             topics = [x['topic_name'] for x in v['topics']]
         rows.append([video_id,title,creator,creator_id,publish_date,duration,v1,v2,v3,v7,v30,
-                     er1,er2,er3,er7,er30,views,engagement,likes,shares,comments,topics,keywords])
+                     er1,er2,er3,er7,er30,views,engagement,likes,shares,comments,topics,keywords,description])
     return pd.DataFrame(rows, columns = ["video_id","title","creator","creator_id","publish_date",
                                          "duration","v1","v2","v3","v7","v30","e1","e2","e3","e7","e30",
-                                         "views","enagement","likes","shares","comments","keywords","topics"])
+                                         "views","enagement","likes","shares","comments","keywords","topics","description"])
 
 
 def flag_challenges(text):
