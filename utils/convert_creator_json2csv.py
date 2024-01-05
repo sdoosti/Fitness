@@ -108,6 +108,32 @@ def create_demographics_csv(creator_dict):
     df = pd.DataFrame(data=rows, columns=columns)
     df.to_csv(os.path.join(os.path.dirname(PATH),"Data","demographics.csv"), index=False)
 
+def create_performance_csv(creator_dict):
+    rows = []
+    for creator in creator_dict:
+        gid = creator['accounts']['youtube']['gid']
+        if 'performance' not in creator['accounts']['youtube']:
+            rows.append([gid, None, None, None, None, None, None, None, None, None, None, None])
+            continue
+        views = creator['accounts']['youtube']['performance'].get('views', None)
+        views_per_upload = creator['accounts']['youtube']['performance'].get('views_per_upload', None)
+        engagements = creator['accounts']['youtube']['performance'].get('engagements', None)
+        engagements_per_upload = creator['accounts']['youtube']['performance'].get('engagements_per_upload', None)
+        uploads_90 = creator['accounts']['youtube']['performance'].get('uploads_90', None)
+        uploads = creator['accounts']['youtube']['performance'].get('uploads', None)
+        followers = creator['accounts']['youtube']['performance'].get('followers', None)
+        followers_30 = creator['accounts']['youtube']['performance'].get('followers_30', None)
+        followers_growth = creator['accounts']['youtube']['performance'].get('followers_growth', None)
+        first_upload = creator['accounts']['youtube']['performance'].get('first_upload', None)
+        influencer_score = creator['accounts']['youtube']['performance'].get('influencer_score', None)
+        row = [gid, views, views_per_upload, engagements, engagements_per_upload, uploads_90, uploads, followers,
+               followers_30, followers_growth, first_upload, influencer_score]
+        rows.append(row)
+    columns = ['creator_id', 'views', 'views_per_upload', 'engagements', 'engagements_per_upload', 'uploads_90',
+               'uploads', 'followers', 'followers_30', 'followers_growth', 'first_upload', 'influencer_score']
+    df = pd.DataFrame(data=rows, columns=columns)
+    df.to_csv(os.path.join(os.path.dirname(PATH),"Data","performance.csv"), index=False)
+
 def create_csv(creator_list):
     data_list = []
     for creator in creator_list:
@@ -132,6 +158,7 @@ def main(file):
     creator_df = create_dataframe(creator_list)
     save_data(creator_df,data_path)
     create_demographics_csv(creator_dict)
+    create_performance_csv(creator_dict)
 
 if __name__ == '__main__':
     YOGA_FILE = "final_yoga_channels_info_091823.json"
