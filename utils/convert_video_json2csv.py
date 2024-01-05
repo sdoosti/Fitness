@@ -80,12 +80,24 @@ def find_challenge_videos(video_titles):
     """
     return video_titles.apply(flag_challenges)
 
+def find_challeng_duration(video_descriptions):
+    """
+    finds the challenge duration if the video is a challenge
+    videos (pandas.Series): a pandas series of video descriptions
+    return (pandas.Series)
+    """
+    # using regex to find how many days the challenge is
+    return video_descriptions.apply(lambda x: re.findall(r"\d+(?= day|-day)", x))
+
 if __name__ == '__main__':
     videos_json = video_file(YOGA_FILE)
     video_df = json2csv(videos_json)
     video_df['publish_date'] = pd.to_datetime(video_df.publish_date)
     video_df.sort_values(['creator','publish_date'],inplace=True)
     video_df['challenge'] = find_challenge_videos(video_df.title)
+    video_df['challenge_duration'] = 0
+    mask = video_df.challenge == 1
+    video_df.loc[mask, 'challenge_duration'] = find_challeng_duration(video_df[mask].description).apply(lambda x: int(x[0]) if len(x)>0 else 0)
 
     # how many 'challenge' videos we have per creator
     #video_df['cum'] = video_df.groupby('creator').challenge.cumsum()
