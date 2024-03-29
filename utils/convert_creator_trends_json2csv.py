@@ -65,5 +65,5 @@ def main(file):
     save_data(creator_df,data_path)
 
 if __name__ == '__main__':
-    YOGA_FILE = "final_yoga_channels_trends_091523.json"
+    YOGA_FILE = "final_yoga_channels_trends_091523.json" #trends_Physical Exercise_Physical Fitness_Gymnasium_Wellness_Strength Training_Pilates.json
     main(YOGA_FILE)
